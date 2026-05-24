@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SME SIEM Dissertation — Custom MITRE ATT&CK Rules
+  Harshil Patel — University of Gloucestershire — 2026
+  File: /var/ossec/etc/rules/sme_mitre_rules.xml
+  Rules: 100001 to 100016
+  Sectors: Healthcare-SME + Retail-SME
+-->
+<group name="sme_mitre,">
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1078 — Valid Accounts / Brute Force
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100001" level="10" frequency="8" timeframe="60">
+    <if_matched_sid>5760</if_matched_sid>
+    <description>SME-ALERT: Multiple failed login attempts detected.
+    Possible brute force attack (MITRE T1078).</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>authentication_failures,pci_dss_10.2.4,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <rule id="100002" level="12">
+    <if_sid>40112</if_sid>
+    <description>SME-ALERT: Successful login after multiple failures.
+    Credential brute force may have succeeded (MITRE T1078).</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>authentication_success,pci_dss_10.2.5,gdpr_IV_32.2,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1003 — OS Credential Dumping (Linux)
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100003" level="14">
+    <if_sid>550</if_sid>
+    <match>passwd|shadow|sudoers</match>
+    <description>SME-ALERT: Sensitive credential file accessed or
+    modified. Possible credential dumping attack (MITRE T1003).</description>
+    <mitre>
+      <id>T1003</id>
+    </mitre>
+    <group>credential_access,gdpr_IV_35.7.d,hipaa_164.312.a.2.iv,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1003.001 — LSASS Memory Dump (Windows)
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100004" level="14">
+    <if_sid>61100</if_sid>
+    <field name="win.eventdata.targetImage">lsass.exe</field>
+    <description>SME-ALERT: Credential dumping attempt detected on
+    Windows system. LSASS memory targeted (MITRE T1003.001).</description>
+    <mitre>
+      <id>T1003.001</id>
+    </mitre>
+    <group>credential_access,pci_dss_10.2.4,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1059 — Command and Scripting Interpreter / Reverse Shell
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100005" level="12">
+    <if_sid>5715</if_sid>
+    <match>/dev/tcp|/dev/udp|bash -i|sh -i</match>
+    <description>SME-ALERT: Possible reverse shell detected. Attacker
+    may have remote access to your system (MITRE T1059).</description>
+    <mitre>
+      <id>T1059</id>
+    </mitre>
+    <group>execution,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1059.001 — PowerShell Obfuscation (Windows)
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100006" level="12">
+    <if_sid>61600</if_sid>
+    <field name="win.eventdata.commandLine" type="pcre2">
+      -enc|-EncodedCommand|-nop|-WindowStyle Hidden
+    </field>
+    <description>SME-ALERT: Obfuscated PowerShell command detected.
+    This technique is used to hide malicious activity (MITRE T1059.001).
+    </description>
+    <mitre>
+      <id>T1059.001</id>
+    </mitre>
+    <group>execution,pci_dss_10.2.4,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1021 — Remote Services / Lateral Movement
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100007" level="10">
+    <if_sid>5715</if_sid>
+    <srcip>192.168.56.0/24</srcip>
+    <description>SME-ALERT: Internal network login detected from
+    unusual source. Possible lateral movement (MITRE T1021).</description>
+    <mitre>
+      <id>T1021</id>
+    </mitre>
+    <group>lateral_movement,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1021.002 — SMB Lateral Movement (Windows)
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100008" level="12">
+    <if_sid>18107</if_sid>
+    <field name="win.system.eventID">4648</field>
+    <description>SME-ALERT: Attempt to connect to another computer
+    on your network detected. Possible attacker spreading between
+    systems (MITRE T1021.002).</description>
+    <mitre>
+      <id>T1021.002</id>
+    </mitre>
+    <group>lateral_movement,pci_dss_10.2.4,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1486 — Data Encrypted for Impact (Ransomware)
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100009" level="15">
+    <if_sid>550,554</if_sid>
+    <match>.encrypted|.locked|.crypto|ransom</match>
+    <description>SME-ALERT: RANSOMWARE DETECTED. Files may be
+    being encrypted right now. Disconnect from internet immediately
+    (MITRE T1486).</description>
+    <mitre>
+      <id>T1486</id>
+    </mitre>
+    <group>impact,gdpr_IV_35.7.d,pci_dss_10.2.4,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1074 — Data Staged for Exfiltration
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100010" level="12">
+    <if_sid>550</if_sid>
+    <match>/tmp|/var/tmp|staging|exfil</match>
+    <description>SME-ALERT: Files may be being collected for theft.
+    Unusual file activity detected in temporary storage (MITRE T1074).
+    </description>
+    <mitre>
+      <id>T1074</id>
+    </mitre>
+    <group>collection,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1041 — Data Exfiltration Over C2 Channel
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100011" level="12">
+    <if_sid>5715</if_sid>
+    <match>curl|wget|nc |ncat</match>
+    <description>SME-ALERT: Data may be leaving your system through
+    an unauthorised connection. Possible data exfiltration attempt
+    (MITRE T1041).</description>
+    <mitre>
+      <id>T1041</id>
+    </mitre>
+    <group>exfiltration,gdpr_IV_35.7.d,pci_dss_10.2.4,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1204 — User Execution (Malicious File)
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100012" level="10">
+    <if_sid>61100</if_sid>
+    <field name="win.eventdata.image" type="pcre2">
+      \.exe$|\.bat$|\.vbs$|\.ps1$
+    </field>
+    <description>SME-ALERT: A potentially dangerous file has been
+    opened on your Windows system. This may be a malicious attachment
+    (MITRE T1204).</description>
+    <mitre>
+      <id>T1204</id>
+    </mitre>
+    <group>execution,pci_dss_10.2.4,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1055 — Process Injection (Windows)
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100013" level="12">
+    <if_sid>61100</if_sid>
+    <field name="win.eventdata.grantedAccess">0x1fffff|0x1f0fff</field>
+    <description>SME-ALERT: A suspicious program is attempting to
+    inject code into another process. This is a common malware
+    technique (MITRE T1055).</description>
+    <mitre>
+      <id>T1055</id>
+    </mitre>
+    <group>defense_evasion,pci_dss_10.2.4,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1136 — Create Account (Linux)
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100015" level="10">
+    <if_sid>5902</if_sid>
+    <description>SME-ALERT: New user account created on Linux system.
+    If you did not authorise this, an attacker may have created a
+    backdoor account (MITRE T1136).</description>
+    <mitre>
+      <id>T1136</id>
+    </mitre>
+    <group>persistence,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       T1136 — Create Account (Windows)
+       ══════════════════════════════════════════════════════════════ -->
+
+  <rule id="100016" level="10">
+    <if_sid>18107</if_sid>
+    <field name="win.system.eventID">4720</field>
+    <description>SME-ALERT: New user account created on Windows
+    system using command line. Possible backdoor account creation
+    (MITRE T1136).</description>
+    <mitre>
+      <id>T1136</id>
+    </mitre>
+    <group>persistence,pci_dss_10.2.4,</group>
+  </rule>
+
+</group>
