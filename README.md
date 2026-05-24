@@ -54,7 +54,7 @@ Python service (`alert_explainer.py`) that monitors `alerts.json` in real time a
 Runs as a systemd service alongside Wazuh.
 
 ### Component 4 — SME Security Guardian App
-See the companion repository: [sme-security-guardian](https://github.com/YOUR_USERNAME/sme-security-guardian)
+See the companion repository: [sme-security-guardian](https://github.com/HarshilPatel04/sme-security-guardian)
 
 Web dashboard + Telegram push notifications delivering crisis cards to business owners in real time.
 
